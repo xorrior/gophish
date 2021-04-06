@@ -42,7 +42,7 @@ type Config struct {
 var Version = ""
 
 // ServerName is the server type that is returned in the transparency response.
-const ServerName = "gophish"
+const ServerName = "postfix"
 
 // LoadConfig loads the configuration from the specified filepath
 func LoadConfig(filepath string) (*Config, error) {
