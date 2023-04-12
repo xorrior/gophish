@@ -153,6 +153,7 @@ function edit(idx) {
     })
     var profile = {}
     if (idx != -1) {
+        $("#profileModalLabel").text("Edit Sending Profile")
         profile = profiles[idx]
         $("#name").val(profile.name)
         $("#interface_type").val(profile.interface_type)
@@ -164,6 +165,8 @@ function edit(idx) {
         $.each(profile.headers, function (i, record) {
             addCustomHeader(record.key, record.value)
         });
+    } else {
+        $("#profileModalLabel").text("New Sending Profile")
     }
 }
 
@@ -307,7 +310,7 @@ $(document).ready(function () {
         dismissSendTestEmailModal()
     })
     // Code to deal with custom email headers
-    $("#headersForm").on('submit', function () {
+    $("#addCustomHeader").on('click', function () {
         headerKey = $("#headerKey").val();
         headerValue = $("#headerValue").val();
 
@@ -316,7 +319,8 @@ $(document).ready(function () {
         }
         addCustomHeader(headerKey, headerValue);
         // Reset user input.
-        $("#headersForm>div>input").val('');
+        $("#headerKey").val('');
+        $("#headerValue").val('');
         $("#headerKey").focus();
         return false;
     });

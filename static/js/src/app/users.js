@@ -56,14 +56,17 @@ const dismiss = () => {
 }
 
 const edit = (id) => {
+    $("#username").attr("disabled", false);
     $("#modalSubmit").unbind('click').click(() => {
         save(id)
     })
     $("#role").select2()
     if (id == -1) {
+        $("#userModalLabel").text("New User")
         $("#role").val("user")
         $("#role").trigger("change")
     } else {
+        $("#userModalLabel").text("Edit User")
         api.userId.get(id)
             .success((user) => {
                 $("#username").val(user.username)
@@ -71,6 +74,9 @@ const edit = (id) => {
                 $("#role").trigger("change")
                 $("#force_password_change_checkbox").prop('checked', user.password_change_required)
                 $("#account_locked_checkbox").prop('checked', user.account_locked)
+                if (user.username == "admin") {
+                    $("#username").attr("disabled", true);
+                }
             })
             .error(function () {
                 errorFlash("Error fetching user")
@@ -81,6 +87,14 @@ const edit = (id) => {
 const deleteUser = (id) => {
     var user = users.find(x => x.id == id)
     if (!user) {
+        return
+    }
+    if (user.username == "admin") {
+        Swal.fire({
+            title: "Unable to Delete User",
+            text: "The user account " + escapeHtml(user.username) + " cannot be deleted.",
+            type: "info"
+        });
         return
     }
     Swal.fire({
@@ -189,7 +203,7 @@ const load = () => {
             userTable.clear();
             userRows = []
             $.each(users, (i, user) => {
-                lastlogin = "Never"
+                lastlogin = ""
                 if (user.last_login != "0001-01-01T00:00:00Z") {
                     lastlogin = moment(user.last_login).format('MMMM Do YYYY, h:mm:ss a')
                 }

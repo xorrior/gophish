@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/NYTimes/gziphandler"
@@ -153,7 +154,8 @@ func (as *AdminServer) registerRoutes() {
 	}
 	csrfHandler := csrf.Protect(csrfKey,
 		csrf.FieldName("csrf_token"),
-		csrf.Secure(as.config.UseTLS))
+		csrf.Secure(as.config.UseTLS),
+		csrf.TrustedOrigins(as.config.TrustedOrigins))
 	adminHandler := csrfHandler(router)
 	adminHandler = mid.Use(adminHandler.ServeHTTP, mid.CSRFExceptions, mid.GetContext, mid.ApplySecurityHeaders)
 
@@ -296,9 +298,9 @@ func (as *AdminServer) nextOrIndex(w http.ResponseWriter, r *http.Request) {
 	next := "/"
 	url, err := url.Parse(r.FormValue("next"))
 	if err == nil {
-		path := url.Path
+		path := url.EscapedPath()
 		if path != "" {
-			next = path
+			next = "/" + strings.TrimLeft(path, "/")
 		}
 	}
 	http.Redirect(w, r, next, http.StatusFound)

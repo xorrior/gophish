@@ -1,11 +1,8 @@
 package models
 
 import (
-	"encoding/base64"
 	"fmt"
-	"io"
 	"net/mail"
-	"strings"
 
 	"github.com/gophish/gomail"
 	"github.com/gophish/gophish/config"
@@ -77,6 +74,10 @@ func (s *EmailRequest) Success() error {
 	return nil
 }
 
+func (s *EmailRequest) GetSmtpFrom() (string, error) {
+	return s.SMTP.FromAddress, nil
+}
+
 // PostEmailRequest stores a SendTestEmailRequest in the database.
 func PostEmailRequest(s *EmailRequest) error {
 	// Generate an ID to be used in the underlying Result object
@@ -99,7 +100,7 @@ func GetEmailRequestByResultId(id string) (EmailRequest, error) {
 // Generate fills in the details of a gomail.Message with the contents
 // from the SendTestEmailRequest.
 func (s *EmailRequest) Generate(msg *gomail.Message) error {
-	f, err := mail.ParseAddress(s.FromAddress)
+	f, err := mail.ParseAddress(s.getFromAddress())
 	if err != nil {
 		return err
 	}
@@ -167,16 +168,10 @@ func (s *EmailRequest) Generate(msg *gomail.Message) error {
 			msg.AddAlternative("text/html", html)
 		}
 	}
+
 	// Attach the files
 	for _, a := range s.Template.Attachments {
-		msg.Attach(func(a Attachment) (string, gomail.FileSetting, gomail.FileSetting) {
-			h := map[string][]string{"Content-ID": {fmt.Sprintf("<%s>", a.Name)}}
-			return a.Name, gomail.SetCopyFunc(func(w io.Writer) error {
-				decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(a.Content))
-				_, err = io.Copy(w, decoder)
-				return err
-			}), gomail.SetHeader(h)
-		}(a))
+		addAttachment(msg, a, ptx)
 	}
 
 	return nil
